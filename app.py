@@ -14,9 +14,16 @@ uploaded_file = st.file_uploader(
 def make_sketch(image):
     img = np.array(image.convert("RGB"))
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    inverted = 255 - gray
-    blurred = cv2.GaussianBlur(inverted, (21, 21), 0)
-    sketch = cv2.divide(gray, 255 - blurred, scale=256)
+
+    # Kontrast erhöhen
+    gray = cv2.equalizeHist(gray)
+
+    # Kanten erkennen (feiner als vorher)
+    edges = cv2.Canny(gray, 50, 150)
+
+    # Invertieren (damit weißer Hintergrund)
+    sketch = 255 - edges
+
     return sketch
 
 if uploaded_file:
