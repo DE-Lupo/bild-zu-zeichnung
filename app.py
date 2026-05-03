@@ -23,23 +23,17 @@ def make_sketch(image):
 
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    # 🔥 KONTRAST RETTEN (wichtigster Schritt!)
-    gray = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
+    # 🔥 Wichtig: stärker glätten → weniger Hintergrundrauschen
+    smooth = cv2.bilateralFilter(gray, 9, 75, 75)
 
-    # zusätzlich Histogramm strecken
-    gray = cv2.equalizeHist(gray)
-
-    # Rauschen entfernen
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
-
-    # Kanten sauber extrahieren
-    edges = cv2.Canny(blur, 70, 140)
+    # 🔥 Weniger empfindliche Kanten
+    edges = cv2.Canny(smooth, 80, 160)
 
     # Linien leicht verstärken
     kernel = np.ones((2,2), np.uint8)
     edges = cv2.dilate(edges, kernel, iterations=1)
 
-    # Invertieren → weißer Hintergrund
+    # Hintergrund weiß
     sketch = 255 - edges
 
     return sketch
