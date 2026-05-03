@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 from io import BytesIO
 
-st.set_page_config(page_title="Bild zu Zeichnung", layout="centered")
+st.set_page_config(page_title="Bild zu Zeichnung")
 
 st.title("Bild zu Zeichnung")
 
@@ -22,6 +22,8 @@ style = st.selectbox(
         "Soft Pencil"
     ]
 )
+
+# ---------- Hilfsfunktionen ----------
 
 def resize_image(img, max_width=1000):
     h, w = img.shape[:2]
@@ -80,35 +82,38 @@ def make_sketch(image, style):
 
     if style == "Clean Lineart":
         return clean_lineart(gray)
-
-    if style == "Normal Sketch":
+    elif style == "Normal Sketch":
+        return normal_sketch(gray)
+    elif style == "Detail Sketch":
+        return detail_sketch(gray)
+    elif style == "Soft Pencil":
+        return soft_pencil(gray)
+    else:
         return normal_sketch(gray)
 
-    if style == "Detail Sketch":
-        return detail_sketch(gray)
-
-    if style == "Soft Pencil":
-        return soft_pencil(gray)
-
-    return normal_sketch(gray)
+# ---------- Hauptlogik ----------
 
 if uploaded_file:
-    image = Image.open(uploaded_file)
-    sketch = make_sketch(image, style)
+    try:
+        image = Image.open(uploaded_file)
+        sketch = make_sketch(image, style)
 
-    st.subheader("Original")
-    st.image(image, use_container_width=True)
+        st.subheader("Original")
+        st.image(image, use_column_width=True)
 
-    st.subheader(f"Zeichnung: {style}")
-    st.image(sketch, channels="GRAY", use_container_width=True)
+        st.subheader(f"Zeichnung: {style}")
+        st.image(sketch, channels="GRAY", use_column_width=True)
 
-    result_image = Image.fromarray(sketch)
-    buffer = BytesIO()
-    result_image.save(buffer, format="PNG")
+        result_image = Image.fromarray(sketch)
+        buffer = BytesIO()
+        result_image.save(buffer, format="PNG")
 
-    st.download_button(
-        "Zeichnung herunterladen",
-        data=buffer.getvalue(),
-        file_name="zeichnung.png",
-        mime="image/png"
-    )
+        st.download_button(
+            "Zeichnung herunterladen",
+            data=buffer.getvalue(),
+            file_name="zeichnung.png",
+            mime="image/png"
+        )
+
+    except Exception as e:
+        st.error(f"Fehler: {e}")
