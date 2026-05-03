@@ -22,16 +22,17 @@ def make_sketch(image):
 
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    # Rauschen glätten, aber Gesicht erhalten
-    gray = cv2.bilateralFilter(gray, 9, 75, 75)
+    # Sanft glätten
+    smooth = cv2.bilateralFilter(gray, 7, 50, 50)
 
-    # Klassischer weicher Sketch
-    inverted = 255 - gray
-    blurred = cv2.GaussianBlur(inverted, (35, 35), 0)
-    sketch = cv2.divide(gray, 255 - blurred, scale=256)
+    # Bleistift-Schattierung
+    inverted = 255 - smooth
+    blur = cv2.GaussianBlur(inverted, (21, 21), 0)
+    sketch = cv2.divide(smooth, 255 - blur, scale=230)
 
-    # Nur leicht abdunkeln, nicht übertreiben
-    sketch = cv2.convertScaleAbs(sketch, alpha=1.15, beta=-12)
+    # Gamma/Kontrast: weniger weiß, mehr Details
+    sketch = cv2.normalize(sketch, None, 25, 235, cv2.NORM_MINMAX)
+    sketch = cv2.convertScaleAbs(sketch, alpha=1.25, beta=-25)
 
     return sketch
 
