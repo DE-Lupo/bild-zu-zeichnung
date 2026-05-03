@@ -15,22 +15,27 @@ mode = st.selectbox(
     "Modus wählen",
     [
         "Gratis: Foto → Zeichnung",
-        "KI: Text → Zeichnung",
-        "KI: Foto → gleiche Person als Zeichnung"
+        "Premium: Foto → Bleistiftzeichnung",
+        "KI: Text → Zeichnung"
     ]
 )
-
-def file_to_bytes(file):
-    return BytesIO(file.getvalue())
 
 def get_result_url(output):
     result = output[0] if isinstance(output, list) else output
     return result.url if hasattr(result, "url") else str(result)
 
-def opencv_sketch(image):
-    img = np.array(image.convert("RGB"))
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+def resize_image(img, max_width=1200):
+    h, w = img.shape[:2]
+    if w > max_width:
+        scale = max_width / w
+        img = cv2.resize(img, (max_width, int(h * scale)))
+    return img
 
+def simple_lineart(image):
+    img = np.array(image.convert("RGB"))
+    img = resize_image(img)
+
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     smooth = cv2.bilateralFilter(gray, 9, 75, 75)
     edges = cv2.Canny(smooth, 80, 160)
 
@@ -39,7 +44,51 @@ def opencv_sketch(image):
 
     return 255 - edges
 
-# ---------- MODUS 1 ----------
+def premium_pencil(image):
+    img = np.array(image.convert("RGB"))
+    img = resize_image(img)
+
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+    # Kontrast verbessern
+    clahe = cv2.createCLAHE(clipLimit=1.6, tileGridSize=(8, 8))
+    gray = clahe.apply(gray)
+
+    # Haut/Gesicht weich halten
+    smooth = cv2.bilateralFilter(gray, 11, 80, 80)
+
+    # Bleistift-Schattierung
+    inverted = 255 - smooth
+    blur = cv2.GaussianBlur(inverted, (31, 31), 0)
+    pencil = cv2.divide(smooth, 255 - blur, scale=245)
+
+    # Linien extrahieren
+    edges = cv2.Canny(smooth, 70, 150)
+    edges = cv2.dilate(edges, np.ones((1, 1), np.uint8), iterations=1)
+    edges_inv = 255 - edges
+
+    # Schattierung + Linien kombinieren
+    sketch = cv2.multiply(pencil, edges_inv, scale=1 / 255)
+
+    # Finale Abdunklung / Kontrast
+    sketch = cv2.convertScaleAbs(sketch, alpha=1.25, beta=-18)
+
+    return sketch
+
+def image_download(sketch, filename):
+    result_image = Image.fromarray(sketch)
+    buffer = BytesIO()
+    result_image.save(buffer, format="PNG")
+
+    st.download_button(
+        "Zeichnung herunterladen",
+        data=buffer.getvalue(),
+        file_name=filename,
+        mime="image/png"
+    )
+
+# ---------------- MODUS 1 ----------------
+
 if mode == "Gratis: Foto → Zeichnung":
     uploaded_file = st.file_uploader("Foto hochladen", type=["jpg", "jpeg", "png"])
 
@@ -49,79 +98,66 @@ if mode == "Gratis: Foto → Zeichnung":
         st.subheader("Original")
         st.image(image, width="stretch")
 
-        sketch = opencv_sketch(image)
+        sketch = simple_lineart(image)
 
-        st.subheader("Zeichnung")
+        st.subheader("Einfache Zeichnung")
         st.image(sketch, channels="GRAY", width="stretch")
 
-# ---------- MODUS 2 ----------
-elif mode == "KI: Text → Zeichnung":
-    prompt = st.text_area(
-        "Prompt",
-        value="black and white pencil sketch portrait, detailed face"
-    )
+        image_download(sketch, "einfache_zeichnung.png")
 
-    if st.button("KI-Zeichnung erstellen"):
-        if not token:
-            st.error("Token fehlt")
-            st.stop()
+# ---------------- MODUS 2 ----------------
 
-        with st.spinner("KI läuft..."):
-            output = replicate.run(
-                "recraft-ai/recraft-v3",
-                input={
-                    "prompt": prompt,
-                    "size": "1024x1024",
-                    "style": "digital_illustration/hand_drawn"
-                }
-            )
-
-        result_url = get_result_url(output)
-
-        st.image(result_url, width="stretch")
-
-# ---------- MODUS 3 ----------
-elif mode == "KI: Foto → gleiche Person als Zeichnung":
-
+elif mode == "Premium: Foto → Bleistiftzeichnung":
     uploaded_file = st.file_uploader("Foto hochladen", type=["jpg", "jpeg", "png"])
 
-    prompt = st.text_area(
-        "KI-Anweisung",
-        value="same person, pencil sketch, preserve face, black and white"
-    )
-
     if uploaded_file is not None:
-
         image = Image.open(uploaded_file)
 
         st.subheader("Original")
         st.image(image, width="stretch")
 
-        if st.button("👉 Zeichnung erstellen"):
-            st.session_state.run_ai = True
+        sketch = premium_pencil(image)
 
-        if st.session_state.get("run_ai", False):
+        st.subheader("Bleistiftzeichnung")
+        st.image(sketch, channels="GRAY", width="stretch")
 
-            if not token:
-                st.error("Token fehlt")
-                st.stop()
+        image_download(sketch, "bleistiftzeichnung.png")
 
-            with st.spinner("KI erstellt Zeichnung..."):
+# ---------------- MODUS 3 ----------------
 
-                output = replicate.run(
-    "stability-ai/sdxl:2f779eb9b23b34fe171f8eaa021b8261566f0d2c10cd2674063e7dbcd351509e",
-    input={
-        "image": file_to_bytes(uploaded_file),
-        "prompt": prompt,
-        "negative_prompt": "photo, color, realistic photo, painting, 3d render, smooth skin",
-        "prompt_strength": 0.45,
-        "num_inference_steps": 45,
-        "guidance_scale": 8,
-        "num_outputs": 1
-    }
-)
+elif mode == "KI: Text → Zeichnung":
+    prompt = st.text_area(
+        "Prompt",
+        value="black and white pencil sketch portrait, detailed face, hand drawn graphite drawing, white paper background"
+    )
 
-            result_url = get_result_url(output)
+    style = st.selectbox(
+        "Stil",
+        [
+            "digital_illustration/hand_drawn",
+            "digital_illustration/hand_drawn_outline",
+            "realistic_image/b_and_w",
+            "any"
+        ],
+        index=0
+    )
 
-            st.subheader("Ergebnis")
-            st.image(result_url, width="stretch")
+    if st.button("KI-Zeichnung erstellen"):
+        if not token:
+            st.error("REPLICATE_API_TOKEN fehlt in Render.")
+            st.stop()
+
+        with st.spinner("Recraft erstellt die Zeichnung..."):
+            output = replicate.run(
+                "recraft-ai/recraft-v3",
+                input={
+                    "prompt": prompt,
+                    "size": "1024x1024",
+                    "style": style
+                }
+            )
+
+        result_url = get_result_url(output)
+
+        st.subheader("KI-Ergebnis")
+        st.image(result_url, width="stretch")
