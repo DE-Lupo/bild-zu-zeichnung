@@ -14,8 +14,7 @@ uploaded_file = st.file_uploader(
 def make_sketch(image):
     img = np.array(image.convert("RGB"))
 
-    # Bild verkleinern, falls sehr groß
-    max_width = 1200
+    max_width = 1000
     h, w = img.shape[:2]
     if w > max_width:
         scale = max_width / w
@@ -23,16 +22,16 @@ def make_sketch(image):
 
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    # Kontrast verbessern
-    gray = cv2.equalizeHist(gray)
+    # Rauschen glätten, aber Gesicht erhalten
+    gray = cv2.bilateralFilter(gray, 9, 75, 75)
 
-    # Bleistift-Effekt
+    # Klassischer weicher Sketch
     inverted = 255 - gray
-    blurred = cv2.GaussianBlur(inverted, (31, 31), 0)
+    blurred = cv2.GaussianBlur(inverted, (35, 35), 0)
     sketch = cv2.divide(gray, 255 - blurred, scale=256)
 
-    # Kontrast der Zeichnung verstärken
-    sketch = cv2.convertScaleAbs(sketch, alpha=1.6, beta=-40)
+    # Nur leicht abdunkeln, nicht übertreiben
+    sketch = cv2.convertScaleAbs(sketch, alpha=1.15, beta=-12)
 
     return sketch
 
