@@ -14,6 +14,7 @@ uploaded_file = st.file_uploader(
 def make_sketch(image):
     img = np.array(image.convert("RGB"))
 
+    # Resize (Performance)
     max_width = 1000
     h, w = img.shape[:2]
     if w > max_width:
@@ -22,17 +23,15 @@ def make_sketch(image):
 
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    # Sanft glätten
-    smooth = cv2.bilateralFilter(gray, 7, 50, 50)
+    # Leicht glätten (nicht zu stark!)
+    blur = cv2.GaussianBlur(gray, (9, 9), 0)
 
-    # Bleistift-Schattierung
-    inverted = 255 - smooth
-    blur = cv2.GaussianBlur(inverted, (21, 21), 0)
-    sketch = cv2.divide(smooth, 255 - blur, scale=230)
+    # Klassischer Pencil-Effekt
+    inverted = 255 - blur
+    sketch = cv2.divide(gray, 255 - inverted, scale=200)
 
-    # Gamma/Kontrast: weniger weiß, mehr Details
-    sketch = cv2.normalize(sketch, None, 25, 235, cv2.NORM_MINMAX)
-    sketch = cv2.convertScaleAbs(sketch, alpha=1.25, beta=-25)
+    # Kontrast gezielt erhöhen (kontrolliert!)
+    sketch = cv2.convertScaleAbs(sketch, alpha=1.4, beta=-30)
 
     return sketch
 
