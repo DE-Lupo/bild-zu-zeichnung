@@ -138,18 +138,18 @@ elif mode == "KI: Foto → gleiche Person als Zeichnung":
                 st.error("REPLICATE_API_TOKEN fehlt in Render.")
                 st.stop()
 
-            with st.spinner("KI erstellt Zeichnung aus deinem Foto..."):
-output = replicate.run(
-    "stability-ai/sdxl:2f779eb9b23b34fe171f8eaa021b8261566f0d2c10cd2674063e7dbcd351509e",
-    input={
-        "image": file_to_bytes(uploaded_file),
-        "prompt": prompt,
-        "prompt_strength": 0.2,
-        "num_inference_steps": 40,
-        "guidance_scale": 5,
-        "num_outputs": 1
-    }
-)
+           with st.spinner("KI erstellt Zeichnung aus deinem Foto..."):
+    output = replicate.run(
+        "stability-ai/sdxl:2f779eb9b23b34fe171f8eaa021b8261566f0d2c10cd2674063e7dbcd351509e",
+        input={
+            "image": file_to_bytes(uploaded_file),
+            "prompt": prompt,
+            "prompt_strength": 0.2,
+            "num_inference_steps": 40,
+            "guidance_scale": 5,
+            "num_outputs": 1
+        }
+    )
 
             result_url = get_result_url(output)
 
