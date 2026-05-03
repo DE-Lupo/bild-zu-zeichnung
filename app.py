@@ -28,7 +28,7 @@ if uploaded_file:
         image.save("temp.png")
 
         output = replicate.run(
-            "tjrndll/pencil-sketch",
+            "adirik/t2i-adapter-sdxl-lineart:6626dfffc713a43dcd1bc79e8e80337a1aaaae6eda0570407c8a00f46dd83c21",
             input={
                 "image": open("temp.png", "rb"),
                 "prompt": prompt,
