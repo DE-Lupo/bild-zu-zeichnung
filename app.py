@@ -27,15 +27,19 @@ if uploaded_file:
         # Bild speichern temporär
         image.save("temp.png")
 
-        output = replicate.run(
-            "stability-ai/sdxl:latest",
-            input={
-                "image": open("temp.png", "rb"),
-                "prompt": prompt,
-                "strength": 0.7,
-                "num_inference_steps": 30
-            }
-        )
+       try:
+    output = replicate.run(
+        "stability-ai/sdxl:latest",
+        input={
+            "image": open("temp.png", "rb"),
+            "prompt": prompt,
+            "strength": 0.7,
+            "num_inference_steps": 30
+        }
+    )
+except Exception as e:
+    st.error(f"Replicate Fehler: {e}")
+    st.stop()
 
         # Ergebnis laden
         result_url = output[0]
