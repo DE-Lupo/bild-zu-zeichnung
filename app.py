@@ -1,43 +1,43 @@
 import streamlit as st
 import replicate
 import os
-from PIL import Image
 
-st.title("KI Bild zu Zeichnung")
+st.title("KI Zeichnung mit Recraft")
 
-# Token prüfen
 token = os.environ.get("REPLICATE_API_TOKEN")
 if not token:
-    st.error("REPLICATE_API_TOKEN fehlt!")
+    st.error("REPLICATE_API_TOKEN fehlt in Render.")
     st.stop()
 
-uploaded_file = st.file_uploader("Bild hochladen", type=["jpg", "jpeg", "png"])
-
-prompt = st.text_input(
-    "Zeichenstil",
-    value="pencil sketch, black and white drawing"
+prompt = st.text_area(
+    "Prompt / Bildbeschreibung",
+    value="realistic black and white pencil sketch portrait, detailed face, clean white background, hand drawn style"
 )
 
-if uploaded_file:
-    image = Image.open(uploaded_file)
+size = st.selectbox(
+    "Bildgröße",
+    ["1024x1024", "1024x1365", "1365x1024"],
+    index=0
+)
 
-    st.subheader("Original")
-    st.image(image, width="stretch")
+style = st.selectbox(
+    "Stil",
+    ["illustration", "any"],
+    index=0
+)
 
-    with st.spinner("KI erstellt Zeichnung..."):
-        image.save("temp.png")
-
+if st.button("Zeichnung erstellen"):
+    with st.spinner("Recraft erstellt die Zeichnung..."):
         output = replicate.run(
-            "adirik/t2i-adapter-sdxl-lineart:6626dfffc713a43dcd1bc79e8e80337a1aaaae6eda0570407c8a00f46dd83c21",
+            "recraft-ai/recraft-v3",
             input={
-                "image": open("temp.png", "rb"),
                 "prompt": prompt,
-                "strength": 0.7,
-                "num_inference_steps": 30
+                "size": size,
+                "style": style
             }
         )
 
-        result_url = output[0]
+    result_url = output[0] if isinstance(output, list) else output
 
-    st.subheader("KI Zeichnung")
+    st.subheader("Ergebnis")
     st.image(result_url, width="stretch")
