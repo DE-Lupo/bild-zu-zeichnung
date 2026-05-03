@@ -5,10 +5,9 @@ from PIL import Image
 
 st.title("KI Bild zu Zeichnung")
 
-# Token prüfen
 token = os.environ.get("REPLICATE_API_TOKEN")
 if not token:
-    st.error("REPLICATE_API_TOKEN fehlt in Render!")
+    st.error("REPLICATE_API_TOKEN fehlt!")
     st.stop()
 
 uploaded_file = st.file_uploader("Bild hochladen", type=["jpg", "jpeg", "png"])
