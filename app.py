@@ -23,25 +23,27 @@ def make_sketch(image):
 
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    # Kontrast verbessern (moderater!)
-    clahe = cv2.createCLAHE(clipLimit=1.8, tileGridSize=(8,8))
-    gray = clahe.apply(gray)
+    # 🔥 KONTRAST RETTEN (wichtigster Schritt!)
+    gray = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
 
-    # Rauschen reduzieren
-    blur = cv2.medianBlur(gray, 5)
+    # zusätzlich Histogramm strecken
+    gray = cv2.equalizeHist(gray)
+
+    # Rauschen entfernen
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
 
     # Kanten sauber extrahieren
-    edges = cv2.Canny(blur, 60, 120)
+    edges = cv2.Canny(blur, 70, 140)
 
-    # Linien etwas dicker machen
+    # Linien leicht verstärken
     kernel = np.ones((2,2), np.uint8)
     edges = cv2.dilate(edges, kernel, iterations=1)
 
-    # Hintergrund weiß machen
+    # Invertieren → weißer Hintergrund
     sketch = 255 - edges
 
     return sketch
-
+    
 if uploaded_file:
     image = Image.open(uploaded_file)
     sketch = make_sketch(image)
