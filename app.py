@@ -23,22 +23,20 @@ def make_sketch(image):
 
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    # 1. Weiche Schattierung
-    blur = cv2.GaussianBlur(gray, (21, 21), 0)
-    shading = cv2.divide(gray, 255 - blur, scale=256)
+    # Glätten (weniger Rauschen)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
 
-    # 2. Klare Kanten
-    edges = cv2.Canny(gray, 40, 120)
-    edges = 255 - edges  # invertieren (weiß = Hintergrund)
-
-    # 3. Kombination
-    sketch = cv2.multiply(shading, edges, scale=1/255)
-
-    # 4. Kontrast gezielt hochziehen
-    sketch = cv2.convertScaleAbs(sketch, alpha=1.5, beta=-20)
+    # Adaptive Threshold = echte Zeichnungslinien
+    sketch = cv2.adaptiveThreshold(
+        blur,
+        255,
+        cv2.ADAPTIVE_THRESH_MEAN_C,
+        cv2.THRESH_BINARY,
+        11,
+        2
+    )
 
     return sketch
-
 if uploaded_file:
     image = Image.open(uploaded_file)
     sketch = make_sketch(image)
