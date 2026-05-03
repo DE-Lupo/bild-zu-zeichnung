@@ -17,26 +17,32 @@ prompt = st.text_input(
 )
 
 if uploaded_file:
-    image = Image.open(uploaded_file)
+    try:
+        image = Image.open(uploaded_file)
 
-    st.subheader("Original")
-    st.image(image, width="stretch")
+        st.subheader("Original")
+        st.image(image, width="stretch")
 
-    with st.spinner("KI erstellt Zeichnung..."):
+        with st.spinner("KI erstellt Zeichnung..."):
+            image.save("temp.png")
 
-        # Bild speichern temporär
-        image.save("temp.png")
+            output = replicate.run(
+                "stability-ai/sdxl",
+                input={
+                    "image": open("temp.png", "rb"),
+                    "prompt": prompt,
+                    "strength": 0.7,
+                    "num_inference_steps": 30
+                }
+            )
 
-       try:
-    output = replicate.run(
-    "stability-ai/sdxl",
-        input={
-            "image": open("temp.png", "rb"),
-            "prompt": prompt,
-            "strength": 0.7,
-            "num_inference_steps": 30
-        }
-    )
+            result_url = output[0]
+
+        st.subheader("KI Zeichnung")
+        st.image(result_url, width="stretch")
+
+    except Exception as e:
+        st.error(f"Fehler: {e}")
 except Exception as e:
     st.error(f"Replicate Fehler: {e}")
     st.stop()
