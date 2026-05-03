@@ -5,6 +5,7 @@ from PIL import Image
 
 st.title("KI Bild zu Zeichnung")
 
+# Token prüfen
 token = os.environ.get("REPLICATE_API_TOKEN")
 if not token:
     st.error("REPLICATE_API_TOKEN fehlt!")
@@ -18,29 +19,25 @@ prompt = st.text_input(
 )
 
 if uploaded_file:
-    try:
-        image = Image.open(uploaded_file)
+    image = Image.open(uploaded_file)
 
-        st.subheader("Original")
-        st.image(image, width="stretch")
+    st.subheader("Original")
+    st.image(image, width="stretch")
 
-        with st.spinner("KI erstellt Zeichnung..."):
-            image.save("temp.png")
+    with st.spinner("KI erstellt Zeichnung..."):
+        image.save("temp.png")
 
-            output = replicate.run(
-                "stability-ai/sdxl",
-                input={
-                    "image": open("temp.png", "rb"),
-                    "prompt": prompt,
-                    "strength": 0.7,
-                    "num_inference_steps": 30
-                }
-            )
-            
-            result_url = output[0]
+        output = replicate.run(
+            "stability-ai/sdxl",
+            input={
+                "image": open("temp.png", "rb"),
+                "prompt": prompt,
+                "strength": 0.7,
+                "num_inference_steps": 30
+            }
+        )
 
-        st.subheader("KI Zeichnung")
-        st.image(result_url, width="stretch")
+        result_url = output[0]
 
-    except Exception as e:
-        st.error(f"Fehler: {e}")
+    st.subheader("KI Zeichnung")
+    st.image(result_url, width="stretch")
