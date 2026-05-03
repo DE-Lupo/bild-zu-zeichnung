@@ -29,7 +29,7 @@ if uploaded_file:
 
        try:
     output = replicate.run(
-        "stability-ai/sdxl:latest",
+    "stability-ai/sdxl",
         input={
             "image": open("temp.png", "rb"),
             "prompt": prompt,
