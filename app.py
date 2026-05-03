@@ -36,7 +36,7 @@ if uploaded_file:
                     "num_inference_steps": 30
                 }
             )
-
+            
             result_url = output[0]
 
         st.subheader("KI Zeichnung")
