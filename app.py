@@ -4,6 +4,8 @@ import numpy as np
 from PIL import Image
 from io import BytesIO
 
+st.set_page_config(page_title="Bild zu Zeichnung", layout="centered")
+
 st.title("Bild zu Zeichnung")
 
 uploaded_file = st.file_uploader(
@@ -11,42 +13,94 @@ uploaded_file = st.file_uploader(
     type=["jpg", "jpeg", "png"]
 )
 
-def make_sketch(image):
-    img = np.array(image.convert("RGB"))
+style = st.selectbox(
+    "Zeichenstil wählen",
+    [
+        "Clean Lineart",
+        "Normal Sketch",
+        "Detail Sketch",
+        "Soft Pencil"
+    ]
+)
 
-    # Resize
-    max_width = 1000
+def resize_image(img, max_width=1000):
     h, w = img.shape[:2]
     if w > max_width:
         scale = max_width / w
         img = cv2.resize(img, (max_width, int(h * scale)))
+    return img
+
+def clean_lineart(gray):
+    smooth = cv2.bilateralFilter(gray, 15, 100, 100)
+    edges = cv2.Canny(smooth, 100, 200)
+
+    kernel = np.ones((3, 3), np.uint8)
+    edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel)
+    edges = cv2.dilate(edges, kernel, iterations=1)
+
+    return 255 - edges
+
+def normal_sketch(gray):
+    smooth = cv2.bilateralFilter(gray, 9, 75, 75)
+    edges = cv2.Canny(smooth, 80, 160)
+
+    kernel = np.ones((2, 2), np.uint8)
+    edges = cv2.dilate(edges, kernel, iterations=1)
+
+    return 255 - edges
+
+def detail_sketch(gray):
+    clahe = cv2.createCLAHE(clipLimit=1.8, tileGridSize=(8, 8))
+    gray = clahe.apply(gray)
+
+    blur = cv2.medianBlur(gray, 5)
+    edges = cv2.Canny(blur, 60, 120)
+
+    kernel = np.ones((2, 2), np.uint8)
+    edges = cv2.dilate(edges, kernel, iterations=1)
+
+    return 255 - edges
+
+def soft_pencil(gray):
+    smooth = cv2.bilateralFilter(gray, 9, 75, 75)
+
+    inverted = 255 - smooth
+    blurred = cv2.GaussianBlur(inverted, (35, 35), 0)
+
+    sketch = cv2.divide(smooth, 255 - blurred, scale=256)
+    sketch = cv2.convertScaleAbs(sketch, alpha=1.15, beta=-12)
+
+    return sketch
+
+def make_sketch(image, style):
+    img = np.array(image.convert("RGB"))
+    img = resize_image(img)
 
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    # 🔥 Wichtig: stärker glätten → weniger Hintergrundrauschen
-    smooth = cv2.bilateralFilter(gray, 9, 75, 75)
+    if style == "Clean Lineart":
+        return clean_lineart(gray)
 
-    # 🔥 Weniger empfindliche Kanten
-    edges = cv2.Canny(smooth, 80, 160)
+    if style == "Normal Sketch":
+        return normal_sketch(gray)
 
-    # Linien leicht verstärken
-    kernel = np.ones((2,2), np.uint8)
-    edges = cv2.dilate(edges, kernel, iterations=1)
+    if style == "Detail Sketch":
+        return detail_sketch(gray)
 
-    # Hintergrund weiß
-    sketch = 255 - edges
+    if style == "Soft Pencil":
+        return soft_pencil(gray)
 
-    return sketch
-    
+    return normal_sketch(gray)
+
 if uploaded_file:
     image = Image.open(uploaded_file)
-    sketch = make_sketch(image)
+    sketch = make_sketch(image, style)
 
     st.subheader("Original")
-    st.image(image)
+    st.image(image, use_container_width=True)
 
-    st.subheader("Zeichnung")
-    st.image(sketch, channels="GRAY")
+    st.subheader(f"Zeichnung: {style}")
+    st.image(sketch, channels="GRAY", use_container_width=True)
 
     result_image = Image.fromarray(sketch)
     buffer = BytesIO()
