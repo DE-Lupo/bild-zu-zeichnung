@@ -71,7 +71,7 @@ if mode == "Gratis: Foto → Zeichnung":
 elif mode == "KI: Text → Zeichnung":
     prompt = st.text_area(
         "Prompt / Beschreibung",
-        value="a highly detailed pencil sketch of the SAME person in the input image, preserve exact facial features, same identity, same proportions, same expression, realistic shading, black and white drawing"
+        value="realistic black and white pencil sketch portrait, detailed face, clean white background, hand drawn style"
     )
 
     size = st.selectbox(
@@ -118,7 +118,7 @@ elif mode == "KI: Foto → gleiche Person als Zeichnung":
 
     prompt = st.text_area(
         "KI-Anweisung",
-        value="turn this exact person into a detailed pencil sketch, preserve facial features, black and white drawing, realistic shading, clean background"
+        value="a realistic pencil sketch of the SAME person in the input image, preserve exact identity, same face structure, same eyes, same nose, same mouth, no changes to facial proportions, detailed shading, black and white drawing"
     )
 
     if uploaded_file is not None:
@@ -127,7 +127,7 @@ elif mode == "KI: Foto → gleiche Person als Zeichnung":
         st.subheader("Original")
         st.image(image, width="stretch")
 
-        if st.button("👉 Zeichnung erstellen"):
+        if st.button("Foto mit KI in Zeichnung umwandeln"):
             st.session_state.run_ai = True
 
         if st.button("Zurücksetzen"):
@@ -138,18 +138,18 @@ elif mode == "KI: Foto → gleiche Person als Zeichnung":
                 st.error("REPLICATE_API_TOKEN fehlt in Render.")
                 st.stop()
 
-           with st.spinner("KI erstellt Zeichnung aus deinem Foto..."):
-    output = replicate.run(
-        "stability-ai/sdxl:2f779eb9b23b34fe171f8eaa021b8261566f0d2c10cd2674063e7dbcd351509e",
-        input={
-            "image": file_to_bytes(uploaded_file),
-            "prompt": prompt,
-            "prompt_strength": 0.2,
-            "num_inference_steps": 40,
-            "guidance_scale": 5,
-            "num_outputs": 1
-        }
-    )
+            with st.spinner("KI erstellt Zeichnung aus deinem Foto..."):
+                output = replicate.run(
+                    "stability-ai/sdxl:2f779eb9b23b34fe171f8eaa021b8261566f0d2c10cd2674063e7dbcd351509e",
+                    input={
+                        "image": file_to_bytes(uploaded_file),
+                        "prompt": prompt,
+                        "prompt_strength": 0.2,
+                        "num_inference_steps": 40,
+                        "guidance_scale": 5,
+                        "num_outputs": 1
+                    }
+                )
 
             result_url = get_result_url(output)
 
