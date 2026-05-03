@@ -71,7 +71,7 @@ if mode == "Gratis: Foto → Zeichnung":
 elif mode == "KI: Text → Zeichnung":
     prompt = st.text_area(
         "Prompt / Beschreibung",
-        value="realistic black and white pencil sketch portrait, detailed face, clean white background, hand drawn style"
+        value="a highly detailed pencil sketch of the SAME person in the input image, preserve exact facial features, same identity, same proportions, same expression, realistic shading, black and white drawing"
     )
 
     size = st.selectbox(
@@ -144,7 +144,7 @@ elif mode == "KI: Foto → gleiche Person als Zeichnung":
     input={
         "image": file_to_bytes(uploaded_file),
         "prompt": prompt,
-        "prompt_strength": 0.65,
+        ""prompt_strength": 0.3,
         "num_inference_steps": 30,
         "guidance_scale": 7.5,
         "num_outputs": 1
