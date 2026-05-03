@@ -46,24 +46,28 @@ def simple_lineart(image):
 
 def premium_pencil(image):
     img = np.array(image.convert("RGB"))
-    img = resize_image(img)
-
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    gray_blur = cv2.GaussianBlur(gray, (7, 7), 0)
+    # starke Glättung für schöne Flächen
+    gray = cv2.GaussianBlur(gray, (9, 9), 0)
 
-    inverted = 255 - gray_blur
-    blur = cv2.GaussianBlur(inverted, (21, 21), 0)
+    # Pencil shading (Hauptteil!)
+    inverted = 255 - gray
+    blur = cv2.GaussianBlur(inverted, (25, 25), 0)
+    pencil = cv2.divide(gray, 255 - blur, scale=256)
 
-    pencil = cv2.divide(gray_blur, 255 - blur, scale=256)
     pencil = np.clip(pencil, 0, 255).astype(np.uint8)
 
-    edges = cv2.Canny(gray, 60, 120)
-    edges = cv2.GaussianBlur(edges, (5, 5), 0)
-    edges = np.clip(edges * 0.2, 0, 255).astype(np.uint8)
+    # Linien (SEHR schwach!)
+    edges = cv2.Canny(gray, 80, 150)
+    edges = cv2.GaussianBlur(edges, (7, 7), 0)
+    edges = np.clip(edges * 0.1, 0, 255).astype(np.uint8)
 
+    # Kombination
     sketch = cv2.subtract(pencil, edges)
-    sketch = cv2.convertScaleAbs(sketch, alpha=1.15, beta=-10)
+
+    # KONTRAST BOOST (entscheidend!)
+    sketch = cv2.convertScaleAbs(sketch, alpha=1.4, beta=-25)
 
     return sketch
 
