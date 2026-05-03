@@ -137,12 +137,14 @@ elif mode == "KI: Foto → gleiche Person als Zeichnung":
             with st.spinner("KI erstellt Zeichnung aus deinem Foto..."):
                 try:
                     output = replicate.run(
-                        "jagilley/controlnet-canny",
-                        input={
-                            "image": file_to_bytes(uploaded_file),
-                            "prompt": prompt
-                        }
-                    )
+    "stability-ai/sdxl",
+    input={
+        "image": file_to_bytes(uploaded_file),
+        "prompt": prompt,
+        "strength": 0.8,
+        "num_inference_steps": 30
+    }
+)
 
                     result_url = get_result_url(output)
 
