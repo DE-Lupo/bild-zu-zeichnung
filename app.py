@@ -10,8 +10,6 @@ st.set_page_config(page_title="Bild zu Zeichnung", layout="centered")
 st.title("Bild zu Zeichnung")
 
 token = os.environ.get("REPLICATE_API_TOKEN")
-if not token:
-    st.warning("REPLICATE_API_TOKEN fehlt. OpenCV funktioniert, KI nicht.")
 
 mode = st.selectbox(
     "Modus wählen",
@@ -46,7 +44,7 @@ def opencv_sketch(image):
 if mode == "Gratis: Foto → Zeichnung":
     uploaded_file = st.file_uploader("Foto hochladen", type=["jpg", "jpeg", "png"])
 
-    if uploaded_file:
+    if uploaded_file is not None:
         image = Image.open(uploaded_file)
 
         st.subheader("Original")
@@ -120,36 +118,40 @@ elif mode == "KI: Foto → gleiche Person als Zeichnung":
 
     prompt = st.text_area(
         "KI-Anweisung",
-        value="turn this person into a clean black and white pencil sketch portrait, keep the same face, same pose, realistic hand drawn style, white background"
+        value="turn this exact person into a detailed pencil sketch, preserve facial features, black and white drawing, realistic shading, clean background"
     )
 
-    if uploaded_file:
+    if uploaded_file is not None:
         image = Image.open(uploaded_file)
 
         st.subheader("Original")
         st.image(image, width="stretch")
 
-        if st.button("Foto mit KI in Zeichnung umwandeln"):
+        if st.button("👉 Zeichnung erstellen"):
+            st.session_state.run_ai = True
+
+        if st.button("Zurücksetzen"):
+            st.session_state.run_ai = False
+
+        if st.session_state.get("run_ai", False):
             if not token:
                 st.error("REPLICATE_API_TOKEN fehlt in Render.")
                 st.stop()
 
             with st.spinner("KI erstellt Zeichnung aus deinem Foto..."):
-                try:
-                    output = replicate.run(
-    "stability-ai/sdxl",
-    input={
-        "image": file_to_bytes(uploaded_file),
-        "prompt": prompt,
-        "strength": 0.8,
-        "num_inference_steps": 30
-    }
-)
+                output = replicate.run(
+                    "stability-ai/sdxl",
+                    input={
+                        "image": file_to_bytes(uploaded_file),
+                        "prompt": prompt,
+                        "strength": 0.8,
+                        "num_inference_steps": 30
+                    }
+                )
 
-                    result_url = get_result_url(output)
+            result_url = get_result_url(output)
 
-                    st.subheader("KI-Zeichnung")
-                    st.image(result_url, width="stretch")
-
-                except Exception as e:
-                    st.error(f"KI-Fehler: {e}")
+            st.subheader("KI-Zeichnung")
+            st.image(result_url, width="stretch")
+    else:
+        st.info("Bitte zuerst ein Foto hochladen.")
