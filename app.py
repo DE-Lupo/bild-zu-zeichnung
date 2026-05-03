@@ -23,20 +23,22 @@ def make_sketch(image):
 
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    # Glätten (weniger Rauschen)
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    # 🔥 KONTRAST BOOST (sehr wichtig!)
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8,8))
+    gray = clahe.apply(gray)
 
-    # Adaptive Threshold = echte Zeichnungslinien
-    sketch = cv2.adaptiveThreshold(
-        blur,
-        255,
-        cv2.ADAPTIVE_THRESH_MEAN_C,
-        cv2.THRESH_BINARY,
-        11,
-        2
-    )
+    # Leicht glätten
+    blur = cv2.GaussianBlur(gray, (7, 7), 0)
+
+    # Pencil Effekt
+    inverted = 255 - blur
+    sketch = cv2.divide(gray, 255 - inverted, scale=220)
+
+    # Finale Verstärkung
+    sketch = cv2.convertScaleAbs(sketch, alpha=1.6, beta=-30)
 
     return sketch
+
 if uploaded_file:
     image = Image.open(uploaded_file)
     sketch = make_sketch(image)
