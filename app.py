@@ -28,7 +28,7 @@ if uploaded_file:
         image.save("temp.png")
 
         output = replicate.run(
-            "stability-ai/sdxl",
+            "tjrndll/pencil-sketch",
             input={
                 "image": open("temp.png", "rb"),
                 "prompt": prompt,
