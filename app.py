@@ -13,16 +13,26 @@ uploaded_file = st.file_uploader(
 
 def make_sketch(image):
     img = np.array(image.convert("RGB"))
+
+    # Bild verkleinern, falls sehr groß
+    max_width = 1200
+    h, w = img.shape[:2]
+    if w > max_width:
+        scale = max_width / w
+        img = cv2.resize(img, (max_width, int(h * scale)))
+
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    # Kontrast erhöhen
+    # Kontrast verbessern
     gray = cv2.equalizeHist(gray)
 
-    # Kanten erkennen (feiner als vorher)
-    edges = cv2.Canny(gray, 50, 150)
+    # Bleistift-Effekt
+    inverted = 255 - gray
+    blurred = cv2.GaussianBlur(inverted, (31, 31), 0)
+    sketch = cv2.divide(gray, 255 - blurred, scale=256)
 
-    # Invertieren (damit weißer Hintergrund)
-    sketch = 255 - edges
+    # Kontrast der Zeichnung verstärken
+    sketch = cv2.convertScaleAbs(sketch, alpha=1.6, beta=-40)
 
     return sketch
 
