@@ -4,22 +4,26 @@ import os
 
 st.title("KI Zeichnung mit Recraft")
 
+# 🔐 Token prüfen
 token = os.environ.get("REPLICATE_API_TOKEN")
 if not token:
     st.error("REPLICATE_API_TOKEN fehlt in Render.")
     st.stop()
 
+# 📝 Prompt
 prompt = st.text_area(
     "Prompt / Bildbeschreibung",
     value="realistic black and white pencil sketch portrait, detailed face, clean white background, hand drawn style"
 )
 
+# 📐 Größe
 size = st.selectbox(
     "Bildgröße",
     ["1024x1024", "1024x1365", "1365x1024"],
     index=0
 )
 
+# 🎨 Stil (nur erlaubte Werte!)
 style = st.selectbox(
     "Stil",
     [
@@ -31,6 +35,7 @@ style = st.selectbox(
     index=0
 )
 
+# 🚀 Button
 if st.button("Zeichnung erstellen"):
     with st.spinner("Recraft erstellt die Zeichnung..."):
         output = replicate.run(
@@ -42,10 +47,11 @@ if st.button("Zeichnung erstellen"):
             }
         )
 
+    # ✅ Ergebnis korrekt holen
     result = output[0] if isinstance(output, list) else output
 
-# FileOutput in URL/String umwandeln
-result_url = str(result)
+    # ✅ URL sauber extrahieren
+    result_url = result.url if hasattr(result, "url") else str(result)
 
-st.subheader("Ergebnis")
-st.image(result_url, width="stretch")
+    st.subheader("Ergebnis")
+    st.image(result_url, width="stretch")
