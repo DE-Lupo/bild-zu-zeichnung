@@ -59,7 +59,8 @@ def premium_pencil(image):
     # GANZ WICHTIG: nur leichte Kanten!
     edges = cv2.Canny(gray, 60, 120)
     edges = cv2.GaussianBlur(edges, (5, 5), 0)
-    edges = edges * 0.2  # 👈 entscheidend (nur 20% Stärke)
+    edges = (edges * 0.2).astype(np.uint8)
+    sketch = cv2.subtract(pencil, edges)
 
     # Kombination
     sketch = cv2.subtract(pencil, edges)
