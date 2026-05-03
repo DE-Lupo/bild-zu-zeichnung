@@ -23,19 +23,22 @@ def make_sketch(image):
 
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    # 🔥 KONTRAST BOOST (sehr wichtig!)
-    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8,8))
+    # Kontrast verbessern (moderater!)
+    clahe = cv2.createCLAHE(clipLimit=1.8, tileGridSize=(8,8))
     gray = clahe.apply(gray)
 
-    # Leicht glätten
-    blur = cv2.GaussianBlur(gray, (7, 7), 0)
+    # Rauschen reduzieren
+    blur = cv2.medianBlur(gray, 5)
 
-    # Pencil Effekt
-    inverted = 255 - blur
-    sketch = cv2.divide(gray, 255 - inverted, scale=220)
+    # Kanten sauber extrahieren
+    edges = cv2.Canny(blur, 60, 120)
 
-    # Finale Verstärkung
-    sketch = cv2.convertScaleAbs(sketch, alpha=1.6, beta=-30)
+    # Linien etwas dicker machen
+    kernel = np.ones((2,2), np.uint8)
+    edges = cv2.dilate(edges, kernel, iterations=1)
+
+    # Hintergrund weiß machen
+    sketch = 255 - edges
 
     return sketch
 
