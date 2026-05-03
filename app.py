@@ -46,32 +46,26 @@ def simple_lineart(image):
 
 def premium_pencil(image):
     img = np.array(image.convert("RGB"))
-    img = resize_image(img)
-
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    # Kontrast verbessern
-    clahe = cv2.createCLAHE(clipLimit=1.6, tileGridSize=(8, 8))
-    gray = clahe.apply(gray)
+    # Weichzeichnen für schöne Flächen
+    gray_blur = cv2.GaussianBlur(gray, (7, 7), 0)
 
-    # Haut/Gesicht weich halten
-    smooth = cv2.bilateralFilter(gray, 11, 80, 80)
+    # Pencil Effekt (Hauptteil!)
+    inverted = 255 - gray_blur
+    blur = cv2.GaussianBlur(inverted, (21, 21), 0)
+    pencil = cv2.divide(gray_blur, 255 - blur, scale=256)
 
-    # Bleistift-Schattierung
-    inverted = 255 - smooth
-    blur = cv2.GaussianBlur(inverted, (31, 31), 0)
-    pencil = cv2.divide(smooth, 255 - blur, scale=245)
+    # GANZ WICHTIG: nur leichte Kanten!
+    edges = cv2.Canny(gray, 60, 120)
+    edges = cv2.GaussianBlur(edges, (5, 5), 0)
+    edges = edges * 0.2  # 👈 entscheidend (nur 20% Stärke)
 
-    # Linien extrahieren
-    edges = cv2.Canny(smooth, 70, 150)
-    edges = cv2.dilate(edges, np.ones((1, 1), np.uint8), iterations=1)
-    edges_inv = 255 - edges
+    # Kombination
+    sketch = cv2.subtract(pencil, edges)
 
-    # Schattierung + Linien kombinieren
-    sketch = cv2.multiply(pencil, edges_inv, scale=1 / 255)
-
-    # Finale Abdunklung / Kontrast
-    sketch = cv2.convertScaleAbs(sketch, alpha=1.25, beta=-18)
+    # Kontrast feinjustieren
+    sketch = cv2.convertScaleAbs(sketch, alpha=1.15, beta=-10)
 
     return sketch
 
