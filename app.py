@@ -22,7 +22,12 @@ size = st.selectbox(
 
 style = st.selectbox(
     "Stil",
-    ["illustration", "any"],
+    [
+        "digital_illustration/hand_drawn",
+        "digital_illustration/hand_drawn_outline",
+        "realistic_image/b_and_w",
+        "any"
+    ],
     index=0
 )
 
