@@ -37,7 +37,10 @@ if st.button("Zeichnung erstellen"):
             }
         )
 
-    result_url = output[0] if isinstance(output, list) else output
+    result = output[0] if isinstance(output, list) else output
 
-    st.subheader("Ergebnis")
-    st.image(result_url, width="stretch")
+# FileOutput in URL/String umwandeln
+result_url = str(result)
+
+st.subheader("Ergebnis")
+st.image(result_url, width="stretch")
