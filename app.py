@@ -139,14 +139,14 @@ elif mode == "KI: Foto → gleiche Person als Zeichnung":
                 st.stop()
 
             with st.spinner("KI erstellt Zeichnung aus deinem Foto..."):
-                output = replicate.run(
+output = replicate.run(
     "stability-ai/sdxl:2f779eb9b23b34fe171f8eaa021b8261566f0d2c10cd2674063e7dbcd351509e",
     input={
         "image": file_to_bytes(uploaded_file),
         "prompt": prompt,
-        ""prompt_strength": 0.3,
-        "num_inference_steps": 30,
-        "guidance_scale": 7.5,
+        "prompt_strength": 0.2,
+        "num_inference_steps": 40,
+        "guidance_scale": 5,
         "num_outputs": 1
     }
 )
